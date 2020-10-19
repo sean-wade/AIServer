@@ -5,7 +5,7 @@ import json
 import struct
 import socket
 import logging
-from threading import Thread
+from threading import Thread, Lock
 
 
 # TODO:
@@ -22,6 +22,7 @@ class AIServer(object):
             self._server_sock.listen()
             self._client_sock_addr_map = {}
             self._server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self._lock = Lock()
 
             # TODO:
             # self._detector = Detector()
@@ -51,7 +52,7 @@ class AIServer(object):
 
     def worker(self, sock, addr):
         # print(">>>> >>>> >>>> Client list: ", self._client_sock_addr_map.keys())
-        logger.debug(">>>> >>>> >>>> Client list: %s"%str(self._client_sock_addr_map.keys()))
+        logger.info(">>>> >>>> >>>> Client list: %s"%str(self._client_sock_addr_map.keys()))
 
         while True:
             recv_data = sock.recv(1024)
@@ -67,7 +68,7 @@ class AIServer(object):
                 break
 
         print(">>>> >>>> >>>> Client [ ", addr, " ] thread exit !!!")
-        logger.debug(">>>> >>>> >>>> Client [ %s ] thread exit !!!"%str(addr))
+        logger.info(">>>> >>>> >>>> Client [ %s ] thread exit !!!"%str(addr))
         del self._client_sock_addr_map[addr]
 
     
@@ -82,10 +83,12 @@ class AIServer(object):
             logger.error("**** **** **** **** imgPath cannot open %s !!!"%imgPath)
             return ""
         
+        self._lock.acquire()
         # TODO:
         # mmdetection 推理，根据analyseType加载不同模型推理（或使用同一模型的话，返回筛选后的结果）
-        # resultStr = inference(frame)
+        # resultStr = self._detector.inference(frame)
         # return resultStr
+        self._lock.release()
         return "wcgz 10 10 100 100"
 
 
@@ -186,8 +189,18 @@ def init_log(output_dir):
 
 logger = init_log("AIServerLog")
 
+# 获取本机ip
+def get_host_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    finally:
+        s.close()
+    return ip
+
 
 if __name__ == '__main__':
     logger.info('==== ==== ==== ==== ==== ==== ==== ==== ==== Start Process ... ==== ==== ==== ==== ==== ==== ==== ==== ====\n')
-    ai_server = AIServer()
+    ai_server = AIServer(address=get_host_ip(), port=13669)
     ai_server.main_loop()
