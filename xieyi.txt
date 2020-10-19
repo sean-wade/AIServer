@@ -1,0 +1,136 @@
+巡视主机、边缘网关与智能分析模块交互统一设计说明
+1、AI模块以后台服务形式运行,表计识别(srv_recognize)和缺陷识别(srv_ai)分为2个独立服务；
+2、巡视主机和边缘网关基于统一的数据交互格式，向智能分析模块发送识别请求，接受识别结果；
+3、数据交互基于TCP，识别服务为服务端，srv_recognize端口号13668，srv_ai端口号13669；
+4、采用JSON形式传输，数据交互格式定义详见下文。
+
+1.注册消息
+请求:
+{
+    "msgType": "3", 
+    "msgData": {
+        "desNode": "serverSocket", 
+        "srcNode": "clientSocket001",
+        "registerKey": "yijiahe"
+}
+}
+回复:
+{
+    "msgType": "4", 
+    "msgData": {
+        "desNode": "clientSocket001", 
+        "srcNode": "serverSocket",
+	"errorCode": "0"
+}
+}
+
+2.心跳消息
+请求:
+{
+    "msgType": "5", 
+    "msgData": {
+        "desNode": "serverSocket", 
+        "srcNode": "clientSocket001"
+}
+}
+回复:
+{
+    "msgType": "6", 
+    "msgData": {
+        "desNode": "clientSocket001", 
+        "srcNode": "serverSocket",
+"errorCode": "0"
+}
+}
+注：心跳发送时间间隔和服务端断线重连次数可配置。
+
+3.数据消息
+请求:
+{
+	"msgID" : "1234567",
+    "msgType" : "1",
+    "msgData" : 
+        {
+            "desNode": "serverSocket",
+            "srcNode" : "clientSocket001",
+            "data" : 
+                {
+                        "pictureInfo1" : 
+                        {
+                                "analyseType" : "1",
+                                "imagePath" : "http://192.168.9.40:18715/image/21000000049.jpeg",
+                                "modelPath" : "http://192.168.9.37:18715/image/21000000049.jpeg",
+                                "taskId" : "0fe0a872f2c9490089d0e7bf7d687655",
+                                "instanceId" : "11000000052"
+                        },
+                        "pictureInfo2" : 
+                        {
+                                "analyseType" : "27",
+                                "imagePath" : "http://192.168.9.40:18715/image/21000000049.jpeg",
+                                "modelPath" : "http://192.168.9.37:18715/image/21000000049.jpeg",
+                                "taskId" : "0fe0a872f2c9490089d0e7bf7d687655",
+                                "instanceId" : "11000000052"
+                        }
+                }
+        }
+        
+}
+
+回复:
+{
+	"msgID" : "1234568",
+    "msgType" : "2",
+    "msgData" : 
+        {
+                "desNode": "clientSocket001",
+                "srcNode" : "serverSocket",
+                "data" : 
+                {
+                        "resultInfo1" : 
+                        {
+                                "taskId" : "0fe0a872f2c9490089d0e7bf7d687655",
+                                "instanceId" : "11000000052",
+"analyseType" : "0",
+                                "resultValue" : "XXXX"
+                        },
+                        "resultInfo2" : 
+                        {
+                                "taskId" : "0fe0a872f2c9490089d0e7bf7d687655",
+                                "instanceId" : "11000000052",
+"analyseType" : "0",
+                                "resultValue" : "XXXX"                        }
+                }
+        }
+}
+
+
+
+
+
+
+
+
+
+
+{
+'msgType': '2', 
+'msgID': '1234567', 
+'msgData': 
+{
+	'desNode': 'clientSocket001', 
+	'srcNode': 'serverSocket', 
+	'data': 
+	{
+	'resultInfo0': 
+		{'taskId': '0fe0a872f2c9490089d0e7bf7d687655', 
+		'instanceId': '11000000052', 
+		'analyseType': '1', 
+		'resultValue': ''}, 
+	'resultInfo1': 
+		{'taskId': '0fe0a872f2c9490089d0e7bf7d687655', 
+		'instanceId': '11000000052', 
+		'analyseType': '27', 
+		'resultValue': ''}
+	}
+}
+}
